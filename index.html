@@ -1,8 +1,6 @@
-<!-- Shrimp Dodge - Single-file HTML game
-     - Use arrow keys or A/D to move left/right
-     - Avoid falling knives, lemons, and pans
-     - Character: red shrimp with glasses and wizard hat (drawn on canvas)
-     - Save this file as ShrimpDodge.html and open in a browser
+<!-- Shrimp Dodge - Updated version
+     - Character: red shrimp standing, with colorful ski goggles
+     - Milestone: shows "Shrimpers Community💎" every 30 score, disappears after 2s
 -->
 <!doctype html>
 <html lang="tr">
@@ -38,7 +36,7 @@
       <button id="reset">Sıfırla</button>
     </div>
     <p class="hint small">Kontroller: Sol/Sağ ok tuşları veya A/D. Mobilde ekranda sola/sağa dokun.</p>
-    <p class="hint small">Karakter: kırmızı karides, gözlük ve büyücü şapkası. Engeller: bıçak, limon, tava.</p>
+    <p class="hint small">Karakter: kırmızı karides (ayakta), renkli kar gözlüğü takmış. Engeller: bıçak, limon, tava.</p>
     <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
       <button id="toggleSound">Ses: Açık</button>
       <button id="hardMode">Zor Modu</button>
@@ -66,7 +64,7 @@
   let hardMode = false;
 
   // Game state
-  let player = {x: W/2, y: H - 140, w: 96, h: 64, speed: 6};
+  let player = {x: W/2, y: H - 120, w: 72, h: 100, speed: 6};
   let obstacles = [];
   let frame = 0;
   let score = 0;
@@ -75,10 +73,11 @@
   let paused = false;
   let spawnRate = 90; // frames
   let fallSpeed = 2.0;
-     let showCommunity = false;
-let communityTimer = 0;
-let lastMilestone = 0;
 
+  // milestone message
+  let showCommunity = false;
+  let communityTimer = 0;
+  let lastMilestone = 0;
 
   // simple sound
   const beep = (freq=440, time=0.05) => {
@@ -99,7 +98,7 @@ let lastMilestone = 0;
     obstacles = [];
     frame = 0; score = 0; lives = 3; fallSpeed = 2.0; spawnRate = 90; running = false; paused=false;
     updateUI();
-    player.x = W/2; player.y = H - 140;
+    player.x = W/2; player.y = H - 120;
   }
   resetGame();
 
@@ -111,41 +110,53 @@ let lastMilestone = 0;
     hardModeBtn.textContent = hardMode? 'Zor Modu: Açık' : 'Zor Modu';
   }
 
-  // draw the shrimp character
+  // draw the standing shrimp with ski goggles
   function drawShrimp(ctx, x, y, scale=1){
     ctx.save();
     ctx.translate(x,y);
     ctx.scale(scale,scale);
-    // body
+
+    // body (standing oval)
     ctx.beginPath();
-    ctx.ellipse(0,0,48,22,0,0,Math.PI*2);
+    ctx.ellipse(0,0,24,45,0,0,Math.PI*2);
     ctx.fillStyle = '#e03a3a';
     ctx.fill();
-    // tail segments
+
+    // tail
     ctx.beginPath();
-    ctx.moveTo(48,0);
-    ctx.lineTo(70,-18);
-    ctx.lineTo(60,0);
-    ctx.lineTo(70,18);
+    ctx.moveTo(0,45);
+    ctx.lineTo(-15,70);
+    ctx.lineTo(15,70);
     ctx.closePath();
-    ctx.fillStyle = '#d23131'; ctx.fill();
-    // stripes
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.fillRect(-10,-20,8,40);
-    ctx.fillRect(4,-18,8,36);
-    // eye stalk
-    ctx.beginPath(); ctx.arc(-18,-6,8,0,Math.PI*2); ctx.fillStyle='#ffffff'; ctx.fill();
-    ctx.beginPath(); ctx.arc(-22,-6,3,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
-    // glasses
-    ctx.beginPath(); ctx.rect(-34,-18,30,18); ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fill();
-    ctx.beginPath(); ctx.rect(-8,-18,28,18); ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fill();
-    ctx.strokeStyle='#222'; ctx.lineWidth=3; ctx.strokeRect(-34,-18,30,18); ctx.strokeRect(-8,-18,28,18);
-    ctx.beginPath(); ctx.moveTo(-4,-9); ctx.lineTo(-6,-9); ctx.stroke();
-    // wizard hat
-    ctx.beginPath(); ctx.moveTo(-3,-28); ctx.lineTo(20,-60); ctx.lineTo(40,-50); ctx.lineTo(12,-18); ctx.closePath(); ctx.fillStyle='#2b2a7a'; ctx.fill();
-    ctx.beginPath(); ctx.ellipse(6,-14,46,10,0,0,Math.PI*2); ctx.fillStyle='#1b1a45'; ctx.fill();
-    // shine on hat
-    ctx.beginPath(); ctx.moveTo(20,-52); ctx.quadraticCurveTo(18,-46,26,-44); ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle = '#d23131';
+    ctx.fill();
+
+    // arms/legs simplified
+    ctx.strokeStyle = '#b52828';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-18,-10); ctx.lineTo(-34,10);
+    ctx.moveTo(18,-10); ctx.lineTo(34,10);
+    ctx.moveTo(-10,30); ctx.lineTo(-20,50);
+    ctx.moveTo(10,30); ctx.lineTo(20,50);
+    ctx.stroke();
+
+    // eye whites
+    ctx.beginPath(); ctx.arc(-8,-20,6,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    ctx.beginPath(); ctx.arc(8,-20,6,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    ctx.beginPath(); ctx.arc(-8,-20,3,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
+    ctx.beginPath(); ctx.arc(8,-20,3,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
+
+    // ski goggles (colorful band)
+    let grad = ctx.createLinearGradient(-20,-24,20,-10);
+    grad.addColorStop(0,'#ff00ff');
+    grad.addColorStop(0.5,'#00ffff');
+    grad.addColorStop(1,'#ffff00');
+    ctx.fillStyle = grad;
+    ctx.fillRect(-20,-28,40,16);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-20,-28,40,16);
 
     ctx.restore();
   }
@@ -153,7 +164,7 @@ let lastMilestone = 0;
   function spawnObstacle(){
     const types = ['knife','lemon','pan'];
     let type = types[Math.floor(Math.random()*types.length)];
-    if(hardMode){ // more knives in hard mode
+    if(hardMode){
       type = Math.random() < 0.5? 'knife' : (Math.random()<0.6? 'pan':'lemon');
     }
     const w = type==='lemon'?48: type==='pan'?72: 18;
@@ -166,12 +177,10 @@ let lastMilestone = 0;
     ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot);
     if(o.type==='lemon'){
       ctx.beginPath(); ctx.arc(0,0,24,0,Math.PI*2); ctx.fillStyle='#ffd94d'; ctx.fill();
-      ctx.beginPath(); ctx.arc(0,-6,10,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.06)'; ctx.fill();
       ctx.lineWidth=2; ctx.strokeStyle='#f2c94c'; ctx.stroke();
     } else if(o.type==='pan'){
       ctx.beginPath(); ctx.ellipse(0,0,32,16,0,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
       ctx.fillRect(28,-6,26,12);
-      ctx.beginPath(); ctx.arc(8,0,12,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.03)'; ctx.fill();
     } else if(o.type==='knife'){
       ctx.fillStyle='#c7c7c7'; ctx.fillRect(-8,-28,16,56);
       ctx.beginPath(); ctx.moveTo(-8,-28); ctx.lineTo(0,-40); ctx.lineTo(8,-28); ctx.fillStyle='#e9e9e9'; ctx.fill();
@@ -187,20 +196,15 @@ let lastMilestone = 0;
   function gameLoop(){
     if(!running || paused) return;
     frame++;
-    // update spawn rate & difficulty over time
     if(frame % 600 === 0){ fallSpeed += 0.4; spawnRate = Math.max(30, spawnRate - 8); }
 
-    // input
     if(keys['ArrowLeft'] || keys['a']) player.x -= player.speed * (hardMode?1.1:1);
     if(keys['ArrowRight'] || keys['d']) player.x += player.speed * (hardMode?1.1:1);
     if(touchDir) player.x += touchDir * player.speed * 1.5;
-    // clamp
     player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x));
 
-    // spawn
     if(frame % Math.max(6, Math.floor(spawnRate/(hardMode?1.2:1))) === 0){ spawnObstacle(); }
 
-    // update obstacles
     for(let i = obstacles.length-1;i>=0;i--){
       let o = obstacles[i];
       o.y += fallSpeed + (o.type==='knife'?2:0);
@@ -208,13 +212,11 @@ let lastMilestone = 0;
       if(o.y - o.h/2 > H + 20){ obstacles.splice(i,1); score += 1; beep(880, 0.02); }
     }
 
-    // collisions
     const pRect = {x:player.x, y:player.y, w:player.w, h:player.h};
     for(let i=obstacles.length-1;i>=0;i--){
       let o=obstacles[i];
       const oRect = {x:o.x, y:o.y, w:o.w, h:o.h};
       if(rectsCollide(pRect, oRect)){
-        // hit
         obstacles.splice(i,1);
         lives -= 1;
         beep(220,0.08);
@@ -222,9 +224,15 @@ let lastMilestone = 0;
       }
     }
 
-    // score growth
     score += 0.02;
-    // render
+
+    // milestone check every 30
+    if (Math.floor(score) % 30 === 0 && Math.floor(score) !== 0 && Math.floor(score) !== lastMilestone) {
+      showCommunity = true;
+      communityTimer = Date.now();
+      lastMilestone = Math.floor(score);
+    }
+
     render();
     updateUI();
 
@@ -232,65 +240,47 @@ let lastMilestone = 0;
   }
 
   function render(){
-    // clear
     ctx.clearRect(0,0,W,H);
-    // background subtle grid
+
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.02)';
     for(let i=0;i<20;i++){
       ctx.fillRect(0,(i*60 + (frame%60))*1.0 % H, W, 1);
     }
-       // render fonksiyonunun en sonunda, ctx.restore() çağrısından hemen önce ekle
-if (score >= 30) {
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';       // yarı şeffaf arka plan
-  ctx.fillRect(W/2 - 220, H/2 - 60, 440, 120);
-  
-  ctx.fillStyle = '#00e0ff';               // parlak mavi yazı
-  ctx.font = 'bold 32px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Shrimpers Community💎', W/2, H/2 + 12);
-  ctx.restore();
-     //--------------
-     if (showCommunity && Date.now() - communityTimer < 2) {
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillRect(W/2 - 220, H/2 - 60, 440, 120);
-
-  ctx.fillStyle = '#00e0ff';
-  ctx.font = 'bold 32px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Shrimpers Community💎', W/2, H/2 + 12);
-  ctx.restore();
-}
-//--------
-}
-
     ctx.restore();
 
-    // draw player
     drawShrimp(ctx, player.x, player.y, 1.0);
-
-    // draw obstacles
     for(let o of obstacles) drawObstacle(o);
 
-    // HUD small
     ctx.save(); ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(8,8,160,36); ctx.fillStyle='#fff'; ctx.font='16px sans-serif'; ctx.fillText('Score: ' + Math.floor(score), 16, 32); ctx.restore();
+
+    // community message
+    if (showCommunity) {
+      if (Date.now() - communityTimer < 2000) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(W/2 - 220, H/2 - 60, 440, 120);
+        ctx.fillStyle = '#00e0ff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Shrimpers Community💎', W/2, H/2 + 12);
+        ctx.restore();
+      } else {
+        showCommunity = false;
+      }
+    }
   }
 
   function showGameOver(){
-    // overlay
     ctx.save(); ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
     ctx.fillStyle='#fff'; ctx.font='48px sans-serif'; ctx.textAlign='center'; ctx.fillText('Oyun Bitti', W/2, H/2 - 20);
     ctx.font='20px sans-serif'; ctx.fillText('Skor: ' + Math.floor(score), W/2, H/2 + 18);
     ctx.restore();
   }
 
-  // input handlers
   window.addEventListener('keydown', e=>{ keys[e.key] = true; if(e.key===' ' && !running) { startGame(); } });
   window.addEventListener('keyup', e=>{ keys[e.key] = false; });
 
-  // touch controls (simple split-screen)
   canvas.addEventListener('touchstart', e=>{ e.preventDefault(); const t = e.touches[0]; const rect = canvas.getBoundingClientRect(); const x = t.clientX - rect.left; touchDir = x < rect.width/2 ? -1 : 1; });
   canvas.addEventListener('touchmove', e=>{ e.preventDefault(); const t = e.touches[0]; const rect = canvas.getBoundingClientRect(); const x = t.clientX - rect.left; touchDir = x < rect.width/2 ? -1 : 1; });
   canvas.addEventListener('touchend', e=>{ touchDir = 0; });
@@ -303,9 +293,7 @@ if (score >= 30) {
 
   function startGame(){ if(running) return; running = true; paused=false; fallSpeed = 2.0 + (hardMode?1.0:0); spawnRate = hardMode?70:90; requestAnimationFrame(gameLoop); }
 
-  // initial draw
   render();
-
 })();
 </script>
 </body>
