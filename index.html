@@ -1,7 +1,3 @@
-<!-- Shrimp Dodge - Updated version
-     - Character: red shrimp standing, with colorful ski goggles
-     - Milestone: shows "Shrimpers Community💎" every 30 score, disappears after 2s
--->
 <!doctype html>
 <html lang="tr">
 <head>
@@ -9,14 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shrimp Dodge</title>
 <style>
-  :root{--bg:#0b1220;--panel:#0f1a2b;--accent:#ffd166}
   html,body{height:100%;margin:0;font-family:Inter, system-ui, sans-serif;background:linear-gradient(180deg,#1ca3ec 0%, #005f99 100%);color:#e6eef8}
   .wrap{display:flex;gap:20px;align-items:flex-start;justify-content:center;padding:24px}
   canvas{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;box-shadow:0 10px 30px rgba(2,8,23,0.7)}
   .ui{width:320px;max-width:40vw;padding:12px;background:rgba(255,255,255,0.03);border-radius:12px}
   h1{font-size:20px;margin:0 0 8px}
   .row{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
-  button{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
+  button{background:#ffd166;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700}
   .small{font-size:13px;color:#cfe6ff}
   .controls{display:flex;gap:8px;flex-wrap:wrap}
   .hint{font-size:13px;opacity:0.9}
@@ -41,259 +36,97 @@
       <button id="toggleSound">Ses: Açık</button>
       <button id="hardMode">Zor Modu</button>
     </div>
-    <p class="small" style="margin-top:12px">Dosyayı bilgisayarınıza kaydedip çift tıklayarak oynayın.</p>
   </div>
 </div>
 <script>
 (() => {
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  let scoreEl = document.getElementById('score');
-  let livesEl = document.getElementById('lives');
-  let speedEl = document.getElementById('speed');
-  let startBtn = document.getElementById('start');
-  let pauseBtn = document.getElementById('pause');
-  let resetBtn = document.getElementById('reset');
-  let toggleSoundBtn = document.getElementById('toggleSound');
-  let hardModeBtn = document.getElementById('hardMode');
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+let scoreEl = document.getElementById('score');
+let livesEl = document.getElementById('lives');
+let speedEl = document.getElementById('speed');
+let startBtn = document.getElementById('start');
+let pauseBtn = document.getElementById('pause');
+let resetBtn = document.getElementById('reset');
+let toggleSoundBtn = document.getElementById('toggleSound');
+let hardModeBtn = document.getElementById('hardMode');
 
-  let keys = {};
-  let touchDir = 0;
-  let soundOn = true;
-  let hardMode = false;
+let keys = {};
+let touchDir = 0;
+let soundOn = true;
+let hardMode = false;
 
-  // Game state
-  let player = {x: W/2, y: H - 120, w: 72, h: 100, speed: 6};
-  let obstacles = [];
-  let frame = 0;
-  let score = 0;
-  let lives = 3;
-  let running = false;
-  let paused = false;
-  let spawnRate = 90; // frames
-  let fallSpeed = 2.0;
+let player = {x: W/2, y: H - 120, w: 72, h: 100, speed: 6};
+let obstacles = [];
+let frame = 0;
+let score = 0;
+let lives = 3;
+let running = false;
+let paused = false;
+let spawnRate = 90;
+let fallSpeed = 2.0;
 
-  // milestone message
-  let showCommunity = false;
-  let communityTimer = 0;
-  let lastMilestone = 0;
+let showCommunity = false;
+let communityTimer = 0;
+let lastMilestone = 0;
 
-  // simple sound
-  const beep = (freq=440, time=0.05) => {
-    if(!soundOn) return;
-    try{
-      const o = new (window.AudioContext || window.webkitAudioContext)();
-      const s = o.createOscillator();
-      const g = o.createGain();
-      s.type = 'sine'; s.frequency.value = freq;
-      s.connect(g); g.connect(o.destination);
-      g.gain.value = 0.05;
-      s.start(); s.stop(o.currentTime + time);
-      s.onended = ()=>o.close();
-    } catch(e){}
-  }
+function beep(freq=440, time=0.05){ if(!soundOn) return; try{ const o = new (window.AudioContext || window.webkitAudioContext)(); const s = o.createOscillator(); const g = o.createGain(); s.type='sine'; s.frequency.value=freq; s.connect(g); g.connect(o.destination); g.gain.value=0.05; s.start(); s.stop(o.currentTime + time); s.onended=()=>o.close(); } catch(e){} }
 
-  function resetGame(){
-    obstacles = [];
-    frame = 0; score = 0; lives = 3; fallSpeed = 2.0; spawnRate = 90; running = false; paused=false;
-    updateUI();
-    player.x = W/2; player.y = H - 120;
-  }
-  resetGame();
+function resetGame(){ obstacles=[]; frame=0; score=0; lives=3; fallSpeed=2.0; spawnRate=90; running=false; paused=false; player.x=W/2; player.y=H-120; updateUI(); }
+resetGame();
 
-  function updateUI(){
-    scoreEl.textContent = Math.floor(score);
-    livesEl.textContent = lives;
-    speedEl.textContent = (fallSpeed/2).toFixed(2) + '×';
-    toggleSoundBtn.textContent = 'Ses: ' + (soundOn? 'Açık':'Kapalı');
-    hardModeBtn.textContent = hardMode? 'Zor Modu: Açık' : 'Zor Modu';
-  }
+function updateUI(){ scoreEl.textContent = Math.floor(score); livesEl.textContent = lives; speedEl.textContent = (fallSpeed/2).toFixed(2)+'×'; toggleSoundBtn.textContent='Ses: '+(soundOn?'Açık':'Kapalı'); hardModeBtn.textContent=hardMode?'Zor Modu: Açık':'Zor Modu'; }
 
-  // draw the standing shrimp with ski goggles
-  function drawShrimp(ctx, x, y, scale=1){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.scale(scale,scale);
+function drawShrimp(ctx,x,y,scale=1){ ctx.save(); ctx.translate(x,y); ctx.scale(scale,scale);
+ctx.beginPath(); ctx.ellipse(0,0,24,45,0,0,Math.PI*2); ctx.fillStyle='#e03a3a'; ctx.fill();
+ctx.beginPath(); ctx.moveTo(0,45); ctx.lineTo(-15,70); ctx.lineTo(15,70); ctx.closePath(); ctx.fillStyle='#d23131'; ctx.fill();
+ctx.strokeStyle='#b52828'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(-18,-10); ctx.lineTo(-34,10); ctx.moveTo(18,-10); ctx.lineTo(34,10); ctx.moveTo(-10,30); ctx.lineTo(-20,50); ctx.moveTo(10,30); ctx.lineTo(20,50); ctx.stroke();
+ctx.beginPath(); ctx.arc(-8,-20,6,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.beginPath(); ctx.arc(8,-20,6,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.beginPath(); ctx.arc(-8,-20,3,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill(); ctx.beginPath(); ctx.arc(8,-20,3,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
+let grad = ctx.createLinearGradient(-20,-24,20,-10); grad.addColorStop(0,'#ff00ff'); grad.addColorStop(0.5,'#00ffff'); grad.addColorStop(1,'#ffff00'); ctx.fillStyle=grad; ctx.fillRect(-20,-28,40,16); ctx.strokeStyle='#000'; ctx.lineWidth=3; ctx.strokeRect(-20,-28,40,16);
+ctx.restore(); }
 
-    // body (standing oval)
-    ctx.beginPath();
-    ctx.ellipse(0,0,24,45,0,0,Math.PI*2);
-    ctx.fillStyle = '#e03a3a';
-    ctx.fill();
+function spawnObstacle(){ const types=['knife','lemon','pan']; let type=types[Math.floor(Math.random()*types.length)]; if(hardMode){ type=Math.random()<0.5?'knife':(Math.random()<0.6?'pan':'lemon'); } const w=type==='lemon'?48:type==='pan'?72:18; const h=type==='lemon'?48:type==='pan'?28:60; const x=Math.random()*(W-w)+w/2; obstacles.push({x,y:-100,w,h,type,rot:Math.random()*Math.PI*2,spin:(Math.random()-0.5)*0.1}); }
+function drawObstacle(o){ ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.rot); if(o.type==='lemon'){ ctx.beginPath(); ctx.arc(0,0,24,0,Math.PI*2); ctx.fillStyle='#ffd94d'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#f2c94c'; ctx.stroke(); } else if(o.type==='pan'){ ctx.beginPath(); ctx.ellipse(0,0,32,16,0,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill(); ctx.fillRect(28,-6,26,12); } else if(o.type==='knife'){ ctx.fillStyle='#c7c7c7'; ctx.fillRect(-8,-28,16,56); ctx.beginPath(); ctx.moveTo(-8,-28); ctx.lineTo(0,-40); ctx.lineTo(8,-28); ctx.fillStyle='#e9e9e9'; ctx.fill(); ctx.fillStyle='#6b6b6b'; ctx.fillRect(-8,18,16,6); } ctx.restore(); }
+function rectsCollide(a,b){ return !(a.x + a.w/2 < b.x - b.w/2 || a.x - a.w/2 > b.x + b.w/2 || a.y + a.h/2 < b.y - b.h/2 || a.y - a.h/2 > b.y + b.h/2); }
 
-    // tail
-    ctx.beginPath();
-    ctx.moveTo(0,45);
-    ctx.lineTo(-15,70);
-    ctx.lineTo(15,70);
-    ctx.closePath();
-    ctx.fillStyle = '#d23131';
-    ctx.fill();
+function showCommunityMsg(){ showCommunity=true; communityTimer=Date.now(); }
+function showShrimpsOver(){ running=false; ctx.save(); ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#ff5555'; ctx.font='48px sans-serif'; ctx.textAlign='center'; ctx.fillText('Shrimps Over🦐',W/2,H/2-20); ctx.font='24px sans-serif'; ctx.fillText('Skor: '+Math.floor(score),W/2,H/2+20); ctx.restore(); }
 
-    // arms/legs simplified
-    ctx.strokeStyle = '#b52828';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(-18,-10); ctx.lineTo(-34,10);
-    ctx.moveTo(18,-10); ctx.lineTo(34,10);
-    ctx.moveTo(-10,30); ctx.lineTo(-20,50);
-    ctx.moveTo(10,30); ctx.lineTo(20,50);
-    ctx.stroke();
+function gameLoop(){ if(!running||paused) return; frame++; if(frame%600===0){ fallSpeed+=0.4; spawnRate=Math.max(30,spawnRate-8); }
+if(keys['ArrowLeft']||keys['a']) player.x-=player.speed*(hardMode?1.1:1);
+if(keys['ArrowRight']||keys['d']) player.x+=player.speed*(hardMode?1.1:1);
+if(touchDir) player.x+=touchDir*player.speed*1.5;
+player.x=Math.max(player.w/2,Math.min(W-player.w/2,player.x));
+if(frame%Math.max(6,Math.floor(spawnRate/(hardMode?1.2:1)))===0) spawnObstacle();
 
-    // eye whites
-    ctx.beginPath(); ctx.arc(-8,-20,6,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-    ctx.beginPath(); ctx.arc(8,-20,6,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-    ctx.beginPath(); ctx.arc(-8,-20,3,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
-    ctx.beginPath(); ctx.arc(8,-20,3,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
+for(let i=obstacles.length-1;i>=0;i--){ let o=obstacles[i]; o.y+=fallSpeed+(o.type==='knife'?2:0); o.rot+=o.spin; if(o.y-o.h/2>H+20){ obstacles.splice(i,1); score+=1; beep(880,0.02); } }
 
-    // ski goggles (colorful band)
-    let grad = ctx.createLinearGradient(-20,-24,20,-10);
-    grad.addColorStop(0,'#ff00ff');
-    grad.addColorStop(0.5,'#00ffff');
-    grad.addColorStop(1,'#ffff00');
-    ctx.fillStyle = grad;
-    ctx.fillRect(-20,-28,40,16);
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(-20,-28,40,16);
+const pRect={x:player.x,y:player.y,w:player.w,h:player.h};
+for(let i=obstacles.length-1;i>=0;i--){ let o=obstacles[i]; const oRect={x:o.x,y:o.y,w:o.w,h:o.h}; if(rectsCollide(pRect,oRect)){ obstacles.splice(i,1); showShrimpsOver(); break; } }
 
-    ctx.restore();
-  }
+score+=0.02;
+if(Math.floor(score)%30===0&&Math.floor(score)!==0&&Math.floor(score)!==lastMilestone){ showCommunity=true; communityTimer=Date.now(); lastMilestone=Math.floor(score); }
+render(); updateUI(); requestAnimationFrame(gameLoop); }
 
-  function spawnObstacle(){
-    const types = ['knife','lemon','pan'];
-    let type = types[Math.floor(Math.random()*types.length)];
-    if(hardMode){
-      type = Math.random() < 0.5? 'knife' : (Math.random()<0.6? 'pan':'lemon');
-    }
-    const w = type==='lemon'?48: type==='pan'?72: 18;
-    const h = type==='lemon'?48: type==='pan'?28: 60;
-    const x = Math.random()*(W - w) + w/2;
-    obstacles.push({x, y: -100, w, h, type, rot: Math.random()*Math.PI*2, spin: (Math.random()-0.5)*0.1});
-  }
+function render(){ ctx.clearRect(0,0,W,H);
+ctx.save(); ctx.fillStyle='rgba(255,255,255,0.02)'; for(let i=0;i<20;i++){ ctx.fillRect(0,(i*60+(frame%60))*1.0%H,W,1); } ctx.restore();
+drawShrimp(ctx,player.x,player.y,1.0);
+for(let o of obstacles) drawObstacle(o);
+if(showCommunity){ if(Date.now()-communityTimer<2000){ ctx.save(); ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(W/2-220,H/2-60,440,120); ctx.fillStyle='#00e0ff'; ctx.font='bold 32px sans-serif'; ctx.textAlign='center'; ctx.fillText('Shrimpers Community💎',W/2,H/2+12); ctx.restore(); } else showCommunity=false; } }
 
-  function drawObstacle(o){
-    ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot);
-    if(o.type==='lemon'){
-      ctx.beginPath(); ctx.arc(0,0,24,0,Math.PI*2); ctx.fillStyle='#ffd94d'; ctx.fill();
-      ctx.lineWidth=2; ctx.strokeStyle='#f2c94c'; ctx.stroke();
-    } else if(o.type==='pan'){
-      ctx.beginPath(); ctx.ellipse(0,0,32,16,0,0,Math.PI*2); ctx.fillStyle='#222'; ctx.fill();
-      ctx.fillRect(28,-6,26,12);
-    } else if(o.type==='knife'){
-      ctx.fillStyle='#c7c7c7'; ctx.fillRect(-8,-28,16,56);
-      ctx.beginPath(); ctx.moveTo(-8,-28); ctx.lineTo(0,-40); ctx.lineTo(8,-28); ctx.fillStyle='#e9e9e9'; ctx.fill();
-      ctx.fillStyle='#6b6b6b'; ctx.fillRect(-8,18,16,6);
-    }
-    ctx.restore();
-  }
-
-  function rectsCollide(a,b){
-    return !(a.x + a.w/2 < b.x - b.w/2 || a.x - a.w/2 > b.x + b.w/2 || a.y + a.h/2 < b.y - b.h/2 || a.y - a.h/2 > b.y + b.h/2);
-  }
-
-  function gameLoop(){
-    if(!running || paused) return;
-    frame++;
-    if(frame % 600 === 0){ fallSpeed += 0.4; spawnRate = Math.max(30, spawnRate - 8); }
-
-    if(keys['ArrowLeft'] || keys['a']) player.x -= player.speed * (hardMode?1.1:1);
-    if(keys['ArrowRight'] || keys['d']) player.x += player.speed * (hardMode?1.1:1);
-    if(touchDir) player.x += touchDir * player.speed * 1.5;
-    player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x));
-
-    if(frame % Math.max(6, Math.floor(spawnRate/(hardMode?1.2:1))) === 0){ spawnObstacle(); }
-
-    for(let i = obstacles.length-1;i>=0;i--){
-      let o = obstacles[i];
-      o.y += fallSpeed + (o.type==='knife'?2:0);
-      o.rot += o.spin;
-      if(o.y - o.h/2 > H + 20){ obstacles.splice(i,1); score += 1; beep(880, 0.02); }
-    }
-
-    const pRect = {x:player.x, y:player.y, w:player.w, h:player.h};
-    for(let i=obstacles.length-1;i>=0;i--){
-      let o=obstacles[i];
-      const oRect = {x:o.x, y:o.y, w:o.w, h:o.h};
-      if(rectsCollide(pRect, oRect)){
-        obstacles.splice(i,1);
-        lives -= 1;
-        beep(220,0.08);
-        if(lives <= 0){ running = false; showGameOver(); }
-      }
-    }
-
-    score += 0.02;
-
-    // milestone check every 30
-    if (Math.floor(score) % 30 === 0 && Math.floor(score) !== 0 && Math.floor(score) !== lastMilestone) {
-      showCommunity = true;
-      communityTimer = Date.now();
-      lastMilestone = Math.floor(score);
-    }
-
-    render();
-    updateUI();
-
-    requestAnimationFrame(gameLoop);
-  }
-
-  function render(){
-    ctx.clearRect(0,0,W,H);
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.02)';
-    for(let i=0;i<20;i++){
-      ctx.fillRect(0,(i*60 + (frame%60))*1.0 % H, W, 1);
-    }
-    ctx.restore();
-
-    drawShrimp(ctx, player.x, player.y, 1.0);
-    for(let o of obstacles) drawObstacle(o);
-
-    ctx.save(); ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(8,8,160,36); ctx.fillStyle='#fff'; ctx.font='16px sans-serif'; ctx.fillText('Score: ' + Math.floor(score), 16, 32); ctx.restore();
-
-    // community message
-    if (showCommunity) {
-      if (Date.now() - communityTimer < 2000) {
-        ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(W/2 - 220, H/2 - 60, 440, 120);
-        ctx.fillStyle = '#00e0ff';
-        ctx.font = 'bold 32px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Shrimpers Community💎', W/2, H/2 + 12);
-        ctx.restore();
-      } else {
-        showCommunity = false;
-      }
-    }
-  }
-
-  function showGameOver(){
-    ctx.save(); ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#fff'; ctx.font='48px sans-serif'; ctx.textAlign='center'; ctx.fillText('Oyun Bitti', W/2, H/2 - 20);
-    ctx.font='20px sans-serif'; ctx.fillText('Skor: ' + Math.floor(score), W/2, H/2 + 18);
-    ctx.restore();
-  }
-
-  window.addEventListener('keydown', e=>{ keys[e.key] = true; if(e.key===' ' && !running) { startGame(); } });
-  window.addEventListener('keyup', e=>{ keys[e.key] = false; });
-
-  canvas.addEventListener('touchstart', e=>{ e.preventDefault(); const t = e.touches[0]; const rect = canvas.getBoundingClientRect(); const x = t.clientX - rect.left; touchDir = x < rect.width/2 ? -1 : 1; });
-  canvas.addEventListener('touchmove', e=>{ e.preventDefault(); const t = e.touches[0]; const rect = canvas.getBoundingClientRect(); const x = t.clientX - rect.left; touchDir = x < rect.width/2 ? -1 : 1; });
-  canvas.addEventListener('touchend', e=>{ touchDir = 0; });
-
-  startBtn.addEventListener('click', ()=>{ startGame(); });
-  pauseBtn.addEventListener('click', ()=>{ paused = !paused; pauseBtn.textContent = paused? 'Devam et' : 'Duraklat'; if(!paused) requestAnimationFrame(gameLoop); });
-  resetBtn.addEventListener('click', ()=>{ resetGame(); updateUI(); render(); });
-  toggleSoundBtn.addEventListener('click', ()=>{ soundOn = !soundOn; updateUI(); });
-  hardModeBtn.addEventListener('click', ()=>{ hardMode = !hardMode; updateUI(); });
-
-  function startGame(){ if(running) return; running = true; paused=false; fallSpeed = 2.0 + (hardMode?1.0:0); spawnRate = hardMode?70:90; requestAnimationFrame(gameLoop); }
-
-  render();
+window.addEventListener('keydown',e=>{ keys[e.key]=true; if(e.key===' '&&!running) startGame(); });
+window.addEventListener('keyup',e=>{ keys[e.key]=false; });
+canvas.addEventListener('touchstart',e=>{ e.preventDefault(); const t=e.touches[0]; const rect=canvas.getBoundingClientRect(); const x=t.clientX-rect.left; touchDir=x<rect.width/2?-1:1; });
+canvas.addEventListener('touchmove',e=>{ e.preventDefault(); const t=e.touches[0]; const rect=canvas.getBoundingClientRect(); const x=t.clientX-rect.left; touchDir=x<rect.width/2?-1:1; });
+canvas.addEventListener('touchend',e=>{ touchDir=0; });
+startBtn.addEventListener('click',()=>{ startGame(); });
+pauseBtn.addEventListener('click',()=>{ paused=!paused; pauseBtn.textContent=paused?'Devam et':'Duraklat'; if(!paused) requestAnimationFrame(gameLoop); });
+resetBtn.addEventListener('click',()=>{ resetGame(); updateUI(); render(); });
+toggleSoundBtn.addEventListener('click',()=>{ soundOn=!soundOn; updateUI(); });
+hardModeBtn.addEventListener('click',()=>{ hardMode=!hardMode; updateUI(); });
+function startGame(){ if(running) return; running=true; paused=false; fallSpeed=2.0+(hardMode?1.0:0); spawnRate=hardMode?70:90; requestAnimationFrame(gameLoop); }
+render();
 })();
 </script>
 </body>
