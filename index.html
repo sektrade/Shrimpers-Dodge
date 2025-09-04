@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shrimp Dodge</title>
+<title>Shrimpers Dodge</title>
 <style>
   html,body{height:100%;margin:0;font-family:Inter, system-ui, sans-serif;background:linear-gradient(180deg,#1ca3ec 0%, #005f99 100%);color:#e6eef8}
   .wrap{display:flex;gap:20px;align-items:flex-start;justify-content:center;padding:24px}
@@ -21,7 +21,7 @@
 <div class="wrap">
   <canvas id="game" width="640" height="720"></canvas>
   <div class="ui">
-    <h1>Shrimp Dodge</h1>
+    <h1>Shrimpers Dodge</h1>
     <div class="row"><div>Score</div><div id="score">0</div></div>
     <div class="row"><div>Lives</div><div id="lives">-</div></div>
     <div class="row"><div>Speed</div><div id="speed">1.0×</div></div>
@@ -134,7 +134,7 @@ function showShrimpsOver(){
   ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,W,H); 
   ctx.fillStyle='#ff5555'; 
   ctx.font='48px sans-serif'; ctx.textAlign='center'; 
-  ctx.fillText('Shrimps Over🦐',W/2,H/2-20); 
+  ctx.fillText('Shrimpers Over🦐',W/2,H/2-20); 
   ctx.font='24px sans-serif'; ctx.fillText('Skor: '+Math.floor(score),W/2,H/2+20); 
   ctx.restore(); 
 }
