@@ -26,7 +26,7 @@
 </head>
 <body>
 <div class="wrap">
-  <canvas id="game" width="640" height="800"></canvas>
+  <canvas id="game" width="640" height="720"></canvas>
   <div class="ui">
     <h1>Shrimp Dodge</h1>
     <div class="row"><div>Score</div><div id="score">0</div></div>
@@ -236,6 +236,19 @@
     for(let i=0;i<20;i++){
       ctx.fillRect(0,(i*60 + (frame%60))*1.0 % H, W, 1);
     }
+       // render fonksiyonunun en sonunda, ctx.restore() çağrısından hemen önce ekle
+if (score >= 30) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';       // yarı şeffaf arka plan
+  ctx.fillRect(W/2 - 220, H/2 - 60, 440, 120);
+  
+  ctx.fillStyle = '#00e0ff';               // parlak mavi yazı
+  ctx.font = 'bold 32px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Shrimpers Community💎', W/2, H/2 + 12);
+  ctx.restore();
+}
+
     ctx.restore();
 
     // draw player
